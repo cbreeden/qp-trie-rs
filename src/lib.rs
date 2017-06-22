@@ -137,23 +137,34 @@ impl<K, V> Node<K, V> {
 impl<K: AsRef<[u8]>, V> Node<K, V> {
     /// Get a mutable reference to the closest node to the given key, as well as the first index at
     /// which the keys differ.
-    fn get_closest_node_mut<L: AsRef<[u8]>>(&mut self,
+    fn get_closest_node_mut<L: AsRef<[u8]> + Copy>(&mut self,
                                             key: L,
                                             index: usize)
                                             -> (&mut Node<K, V>, usize) {
-        {
-            let closer = self.get_closer_node_mut(key, index);
-
-            if closer.is_some() {
-                return closer.unwrap();
-            }
+        if self.has_closer_node(key) {
+            return self.get_closer_node_mut(key, index).unwrap()
         }
 
         (self, index)
     }
 
+    fn has_closer_node<L: AsRef<[u8]>>(&self, key: L) -> bool {
+        match *self {
+            Node::Leaf(_) => true,
+            Node::Internal(ref internal) => {
+                let index = internal.index;
+                let search_nybble = nybble(index, &key);
 
-    fn get_closer_node_mut<L: AsRef<[u8]>>(&mut self,
+                internal
+                    .nybbles
+                    .get(search_nybble as usize)
+                    .map(|node| node.has_closer_node(key))
+                    .is_some()
+            }
+        }
+    }
+
+    fn get_closer_node_mut<L: AsRef<[u8]> + Copy>(&mut self,
                                            key: L,
                                            index: usize)
                                            -> Option<(&mut Node<K, V>, usize)> {
