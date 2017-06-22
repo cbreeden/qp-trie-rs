@@ -1,0 +1,7 @@
+[package]
+authors = ["Sean Leffler <sean@errno.com>"]
+name = "qp-trie"
+version = "0.1.0"
+
+[dependencies]
+debug_unreachable = "0.1.1"
